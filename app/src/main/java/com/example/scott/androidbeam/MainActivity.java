@@ -10,6 +10,7 @@ import android.nfc.NfcAdapter;
 import android.nfc.NfcEvent;
 import android.os.Bundle;
 import android.os.Parcelable;
+import android.util.Base64;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -22,6 +23,7 @@ import android.nfc.NfcAdapter.OnNdefPushCompleteCallback;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.UnsupportedEncodingException;
 import java.nio.charset.Charset;
 
 
@@ -35,6 +37,7 @@ public class MainActivity extends Activity implements CreateNdefMessageCallback,
     String domain = "com.example.scott.androidbream";
     String type = "icheedata";
     Intent originIntent;
+    Base64 base64;
 
     public TextView getTextView() {
         return textView;
@@ -134,17 +137,27 @@ public class MainActivity extends Activity implements CreateNdefMessageCallback,
         try {
             object.put("StoreName", "7-11");
             object.put("Dateline", "104年01-02月");
-            object.put("invoiceNum", "AA-87654321");
-            object.put("currentTime", "87654321");
-            object.put("storeNum", "賣方12345678");
-            object.put("storePhone", "店號:000000-機01-序00000000");
-            object.put("goods", "熱巧克    45*    1    45T");
-            object.put("totalMoney", "1項    合計45");
-            object.put("payDetail", "現金    $100找零    $55");
+            object.put("InvoiceNum", "AA-87654321");
+            object.put("CurrentTime", "2015-05-01 00:00:00");
+            object.put("StoreNum", "賣方87654321");
+            object.put("StorePhone", "店號:000000-機01-序00000000");
+            object.put("GoodsList", "熱巧克    45*    1    45T\n" +
+                                    "紅豆麵包    30*    1    30T");
+            object.put("TotalMoney", "2項    合計75");
+            object.put("PayDetail", "現金    $100找零    $25");
         } catch (JSONException e) {
             e.printStackTrace();
         }
-        return object.toString().getBytes();
+        String base64String = null;
+        try {
+            base64String = Base64.encodeToString(object.toString().getBytes("UTF-8"), Base64.DEFAULT);
+
+        } catch (UnsupportedEncodingException e) {
+            e.printStackTrace();
+        }
+        byte[] base64Byte = Base64.decode(base64String, Base64.DEFAULT);
+
+        return base64Byte;
     }
 
     @Override
