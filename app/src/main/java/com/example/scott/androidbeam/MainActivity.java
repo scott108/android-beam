@@ -147,8 +147,8 @@ public class MainActivity extends Activity implements CreateNdefMessageCallback,
             object.put("CurrentTime", currentTime);
             object.put("StoreNum", "賣方" + Math.round(Math.random()* 9999) + Math.round(Math.random()* 9999));
             object.put("StorePhone", "店號:000000-機01-序00000000");
-            object.put("GoodsList", "熱巧克    45*    1    45T\n" +
-                                    "紅豆麵包    30*    1    30T");
+            object.put("Goods1", "熱巧克    45*    1    45T");
+            object.put("Goods2", "紅豆麵包    30*    1    30T");
             object.put("TotalMoney", "2項    合計75");
             object.put("PayDetail", "現金    $100找零    $25");
         } catch (JSONException e) {
