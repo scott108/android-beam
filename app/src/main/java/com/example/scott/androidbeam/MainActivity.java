@@ -1,9 +1,7 @@
 package com.example.scott.androidbeam;
 
 import android.app.Activity;
-import android.app.AlertDialog;
 import android.app.PendingIntent;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.nfc.NdefMessage;
@@ -12,7 +10,6 @@ import android.nfc.NfcAdapter;
 import android.nfc.NfcEvent;
 import android.os.Bundle;
 import android.os.Parcelable;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -37,11 +34,7 @@ public class MainActivity extends Activity implements CreateNdefMessageCallback,
     JSONObject object;
     String domain = "com.example.scott.androidbream";
     String type = "icheedata";
-    Intent intentOfMessageActivity;
-
-    public Intent getIntentOfMessageActivity() {
-        return intentOfMessageActivity;
-    }
+    Intent originIntent;
 
     public TextView getTextView() {
         return textView;
@@ -55,7 +48,6 @@ public class MainActivity extends Activity implements CreateNdefMessageCallback,
         textView = (TextView) findViewById(R.id.textView);
         Button sendSignBtn = (Button) findViewById(R.id.sendSignBtn);
         Button sendJsonBtn = (Button) findViewById(R.id.sendJsonBtn);
-        intentOfMessageActivity = new Intent(MainActivity.this, MessageActivity.class);
 
         // Check for available NFC Adapter
         mNfcAdapter = NfcAdapter.getDefaultAdapter(this);
@@ -96,6 +88,8 @@ public class MainActivity extends Activity implements CreateNdefMessageCallback,
         tagDetected.addDataAuthority("ext", null);
         tagDetected.addDataPath("/" + domain + ":" + type, 0);
         tagFilters = new IntentFilter[]{tagDetected};
+
+        originIntent  = getIntent();
     }
 
     public void setNfcMessage(byte[] mimeData) {
@@ -131,14 +125,22 @@ public class MainActivity extends Activity implements CreateNdefMessageCallback,
         System.out.println("intent :" + getIntent().getAction().toString());
         if (NfcAdapter.ACTION_NDEF_DISCOVERED.equals(getIntent().getAction())) {
             processIntent(getIntent());
+            setIntent(originIntent);
         }
     }
 
     private byte[] createJSONObject() {
         object = new JSONObject();
         try {
-            object.put("Scott", "boy");
-            object.put("Mary", "girl");
+            object.put("StoreName", "7-11");
+            object.put("Dateline", "104年01-02月");
+            object.put("invoiceNum", "AA-87654321");
+            object.put("currentTime", "87654321");
+            object.put("storeNum", "賣方12345678");
+            object.put("storePhone", "店號:000000-機01-序00000000");
+            object.put("goods", "熱巧克    45*    1    45T");
+            object.put("totalMoney", "1項    合計45");
+            object.put("payDetail", "現金    $100找零    $55");
         } catch (JSONException e) {
             e.printStackTrace();
         }
@@ -184,6 +186,8 @@ public class MainActivity extends Activity implements CreateNdefMessageCallback,
 
         // record 0 contains the MIME type, record 1 is the AAR, if present
         textView.setText(new String(msg.getRecords()[0].getPayload()));
+        Toast.makeText(this, new String(msg.getRecords()[0].getPayload()), Toast.LENGTH_LONG).show();
+
     }
 
     @Override
