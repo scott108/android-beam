@@ -25,7 +25,7 @@
     <Button
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Send JSONObject"
+        android:text="Send Invoice"
         android:id="@+id/sendJsonBtn"
         android:layout_below="@+id/sendSignBtn"
         android:layout_alignRight="@+id/sendSignBtn" />

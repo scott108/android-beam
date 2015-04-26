@@ -25,6 +25,9 @@ import org.json.JSONObject;
 
 import java.io.UnsupportedEncodingException;
 import java.nio.charset.Charset;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.Random;
 
 
 public class MainActivity extends Activity implements CreateNdefMessageCallback, OnNdefPushCompleteCallback {
@@ -134,12 +137,15 @@ public class MainActivity extends Activity implements CreateNdefMessageCallback,
 
     private byte[] createJSONObject() {
         object = new JSONObject();
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss");
+        String currentTime = sdf.format(new Date());
+
         try {
-            object.put("StoreName", "7-11");
+            object.put("StoreName", "7-Eleven");
             object.put("Dateline", "104年01-02月");
-            object.put("InvoiceNum", "AA-87654321");
-            object.put("CurrentTime", "2015-05-01 00:00:00");
-            object.put("StoreNum", "賣方87654321");
+            object.put("InvoiceNum", "AA-" + Math.round(Math.random()* 9999) + Math.round(Math.random()* 9999));
+            object.put("CurrentTime", currentTime);
+            object.put("StoreNum", "賣方" + Math.round(Math.random()* 9999) + Math.round(Math.random()* 9999));
             object.put("StorePhone", "店號:000000-機01-序00000000");
             object.put("GoodsList", "熱巧克    45*    1    45T\n" +
                                     "紅豆麵包    30*    1    30T");
