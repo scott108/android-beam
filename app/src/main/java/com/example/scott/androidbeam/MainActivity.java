@@ -14,7 +14,14 @@ import android.util.Base64;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.CheckBox;
+import android.widget.CompoundButton;
+import android.widget.EditText;
+import android.widget.RadioButton;
+import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 import android.nfc.NfcAdapter.CreateNdefMessageCallback;
@@ -26,7 +33,10 @@ import org.json.JSONObject;
 import java.io.UnsupportedEncodingException;
 import java.nio.charset.Charset;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Random;
 
 
@@ -35,12 +45,23 @@ public class MainActivity extends Activity implements CreateNdefMessageCallback,
     private NdefMessage ndefMessage;
     protected PendingIntent nfcPendingIntent;
     private IntentFilter[] tagFilters;
+    private Spinner spinner;
+    private ArrayAdapter<String> lunchList;
+    private String[] lunch = {"7-ELEVEN", "FamilyMart", "全聯福利中心"};
+    private String[] goodsName = {"熱狗", "麥香奶茶", "立頓奶茶", "冰淇淋", "口香糖"};
+    private String[] goodsPrice = {"25", "15", "15", "30", "20"};
+    private String storeChoice;
+    private EditText payEditText;
+    private CheckBox checkBox1, checkBox2, checkBox3, checkBox4, checkBox5;
+    private EditText editText1, editText2, editText3, editText4, editText5;
+    private ArrayList<EditText> editTextsList;
+    HashMap<String, Goods> goodsHashMap;
     TextView textView;
     JSONObject object;
     String domain = "com.example.scott.androidbream";
     String type = "icheedata";
     Intent originIntent;
-    Base64 base64;
+
 
     public TextView getTextView() {
         return textView;
@@ -50,10 +71,42 @@ public class MainActivity extends Activity implements CreateNdefMessageCallback,
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        editTextsList = new ArrayList<EditText>();
 
-        textView = (TextView) findViewById(R.id.textView);
-        Button sendSignBtn = (Button) findViewById(R.id.sendSignBtn);
         Button sendJsonBtn = (Button) findViewById(R.id.sendJsonBtn);
+        payEditText = (EditText) findViewById(R.id.payEditText);
+        goodsHashMap = new HashMap<String, Goods>();
+
+        checkBox1 = (CheckBox) findViewById(R.id.checkBox);
+        checkBox2 = (CheckBox) findViewById(R.id.checkBox2);
+        checkBox3 = (CheckBox) findViewById(R.id.checkBox3);
+        checkBox4 = (CheckBox) findViewById(R.id.checkBox4);
+        checkBox5 = (CheckBox) findViewById(R.id.checkBox5);
+        checkBox1.setOnCheckedChangeListener(chklistener);
+        checkBox2.setOnCheckedChangeListener(chklistener);
+        checkBox3.setOnCheckedChangeListener(chklistener);
+        checkBox4.setOnCheckedChangeListener(chklistener);
+        checkBox5.setOnCheckedChangeListener(chklistener);
+
+        editText1 = (EditText) findViewById(R.id.editText2);
+        editText2 = (EditText) findViewById(R.id.editText3);
+        editText3 = (EditText) findViewById(R.id.editText4);
+        editText4 = (EditText) findViewById(R.id.editText5);
+        editText5 = (EditText) findViewById(R.id.editText6);
+
+        editTextsList.add(editText1);
+        editTextsList.add(editText2);
+        editTextsList.add(editText3);
+        editTextsList.add(editText4);
+        editTextsList.add(editText5);
+
+        for(int i = 0; i < 5; i++) {
+            Goods goods = new Goods();
+            goods.setPrice(Integer.valueOf(goodsPrice[i]));
+            goods.setQuantity(1);
+            goods.setEditText(editTextsList.get(i));
+            goodsHashMap.put(goodsName[i], goods);
+        }
 
         // Check for available NFC Adapter
         mNfcAdapter = NfcAdapter.getDefaultAdapter(this);
@@ -71,14 +124,10 @@ public class MainActivity extends Activity implements CreateNdefMessageCallback,
         // Register callback
         mNfcAdapter.setNdefPushMessageCallback(this, this);
 
-        sendSignBtn.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                String sign = "ds5g465ds4g65kgjmew";
-                byte[] signData = sign.getBytes();
-                setNfcMessage(signData);
-            }
-        });
+
+        spinner = (Spinner)findViewById(R.id.mySpinner);
+        lunchList = new ArrayAdapter<String>(this, android.R.layout.simple_spinner_item, lunch);
+        spinner.setAdapter(lunchList);
 
         sendJsonBtn.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -96,7 +145,55 @@ public class MainActivity extends Activity implements CreateNdefMessageCallback,
         tagFilters = new IntentFilter[]{tagDetected};
 
         originIntent  = getIntent();
+
+        spinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener(){
+
+            @Override
+            public void onItemSelected(AdapterView<?> arg0, View arg1,int position, long arg3) {
+                storeChoice = lunch[position];
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {
+
+            }
+        });
+
+
+
     }
+
+    private CheckBox.OnCheckedChangeListener chklistener = new CheckBox.OnCheckedChangeListener(){
+        @Override
+        public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+            // TODO Auto-generated method stub
+            if(checkBox1.isChecked()){
+                goodsHashMap.get("熱狗").setCheck(true);
+            } else {
+                goodsHashMap.get("熱狗").setCheck(false);
+            }
+            if(checkBox2.isChecked()){
+                goodsHashMap.get("麥香奶茶").setCheck(true);
+            } else {
+                goodsHashMap.get("麥香奶茶").setCheck(false);
+            }
+            if(checkBox3.isChecked()){
+                goodsHashMap.get("立頓奶茶").setCheck(true);
+            } else {
+                goodsHashMap.get("立頓奶茶").setCheck(false);
+            }
+            if(checkBox4.isChecked()){
+                goodsHashMap.get("冰淇淋").setCheck(true);
+            } else {
+                goodsHashMap.get("冰淇淋").setCheck(false);
+            }
+            if(checkBox5.isChecked()){
+                goodsHashMap.get("口香糖").setCheck(true);
+            } else {
+                goodsHashMap.get("口香糖").setCheck(false);
+            }
+        }
+    };
 
     public void setNfcMessage(byte[] mimeData) {
         ndefMessage = new NdefMessage(new NdefRecord[]{NdefRecord.createExternal(domain, type, mimeData)});
@@ -141,16 +238,39 @@ public class MainActivity extends Activity implements CreateNdefMessageCallback,
         String currentTime = sdf.format(new Date());
 
         try {
-            object.put("StoreName", "7-Eleven");
-            object.put("Dateline", "104年01-02月");
+            object.put("StoreName", storeChoice);
+            object.put("Dateline", "104年04-05月");
             object.put("InvoiceNum", "AA-" + Math.round(Math.random()* 9999) + Math.round(Math.random()* 9999));
             object.put("CurrentTime", currentTime);
             object.put("StoreNum", "賣方" + Math.round(Math.random()* 9999) + Math.round(Math.random()* 9999));
             object.put("StorePhone", "店號:000000-機01-序00000000");
-            object.put("Goods1", "熱巧克    45*    1    45T");
-            object.put("Goods2", "紅豆麵包    30*    1    30T");
-            object.put("TotalMoney", "2項    合計75");
-            object.put("PayDetail", "現金    $100找零    $25");
+            int totalGoodsPrice = 0;
+            int totalGoods = 0;
+            int k = 0;
+            for(int j = 0; j < 5; j++) {
+                for(int i = k; i < 5; i++) {
+                    if(goodsHashMap.get(goodsName[i]).isCheck()) {
+                        int price = goodsHashMap.get(goodsName[i]).getPrice();
+                        int quantity;
+                        if(!goodsHashMap.get(goodsName[i]).getEditText().getText().toString().equals("")) {
+                            quantity = Integer.valueOf(goodsHashMap.get(goodsName[i]).getEditText().getText().toString());
+                        }else {
+                            quantity = goodsHashMap.get(goodsName[i]).getQuantity();
+                        }
+                        int totalPrice = price * quantity;
+                        object.put("Goods" + j, goodsName[i] +"," + price + "," + quantity +"," + totalPrice);
+                        k = i + 1;
+                        totalGoods++;
+                        totalGoodsPrice += totalPrice;
+                        break;
+                    }
+                }
+            }
+
+            object.put("TotalMoney", totalGoods + "項    合計" + totalGoodsPrice);
+            int pay = Integer.valueOf(payEditText.getText().toString());
+            int comeBack = pay - totalGoodsPrice;
+            object.put("PayDetail", "現金    $" + pay + "找零    $" + comeBack);
         } catch (JSONException e) {
             e.printStackTrace();
         }
