@@ -27,11 +27,18 @@ import android.widget.Toast;
 import android.nfc.NfcAdapter.CreateNdefMessageCallback;
 import android.nfc.NfcAdapter.OnNdefPushCompleteCallback;
 
+import com.example.scott.androidbeam.rsa.RSA;
+
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.UnsupportedEncodingException;
+import java.math.BigInteger;
 import java.nio.charset.Charset;
+import java.security.KeyPair;
+import java.security.NoSuchAlgorithmException;
+import java.security.interfaces.RSAPrivateKey;
+import java.security.interfaces.RSAPublicKey;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -61,6 +68,14 @@ public class MainActivity extends Activity implements CreateNdefMessageCallback,
     String domain = "com.example.scott.androidbream";
     String type = "icheedata";
     Intent originIntent;
+
+    //Key generate
+    KeyPair keyPair = RSA.generateKeyPair();
+    final RSAPublicKey publicKey = (RSAPublicKey) keyPair.getPublic();
+    final BigInteger publicExponent = publicKey.getPublicExponent();
+    final BigInteger modulus = publicKey.getModulus();
+    RSAPrivateKey privateKey = (RSAPrivateKey) keyPair.getPrivate();
+    BigInteger privateExponent = privateKey.getPrivateExponent();
 
 
     public TextView getTextView() {
@@ -236,17 +251,18 @@ public class MainActivity extends Activity implements CreateNdefMessageCallback,
         object = new JSONObject();
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss");
         String currentTime = sdf.format(new Date());
-
+        String invoiceNum = "AA-" + Math.round(Math.random()* 9999) + Math.round(Math.random()* 9999);
         try {
             object.put("StoreName", storeChoice);
             object.put("Dateline", "104年04-05月");
-            object.put("InvoiceNum", "AA-" + Math.round(Math.random()* 9999) + Math.round(Math.random()* 9999));
+            object.put("InvoiceNum", invoiceNum);
             object.put("CurrentTime", currentTime);
             object.put("StoreNum", "賣方" + Math.round(Math.random()* 9999) + Math.round(Math.random()* 9999));
             object.put("StorePhone", "店號:000000-機01-序00000000");
             int totalGoodsPrice = 0;
             int totalGoods = 0;
             int k = 0;
+            String goodsList = null;
             for(int j = 0; j < 5; j++) {
                 for(int i = k; i < 5; i++) {
                     if(goodsHashMap.get(goodsName[i]).isCheck()) {
@@ -259,6 +275,7 @@ public class MainActivity extends Activity implements CreateNdefMessageCallback,
                         }
                         int totalPrice = price * quantity;
                         object.put("Goods" + j, goodsName[i] +"," + price + "," + quantity +"," + totalPrice);
+                        goodsList += goodsName[i] + price + quantity + totalPrice;
                         k = i + 1;
                         totalGoods++;
                         totalGoodsPrice += totalPrice;
@@ -271,7 +288,18 @@ public class MainActivity extends Activity implements CreateNdefMessageCallback,
             int pay = Integer.valueOf(payEditText.getText().toString());
             int comeBack = pay - totalGoodsPrice;
             object.put("PayDetail", "現金    $" + pay + "找零    $" + comeBack);
+
+            //Sign the invoice
+            String m = RSA.SHA1(goodsList) + invoiceNum + totalGoodsPrice + currentTime;
+            final byte[] signed = RSA.sign(m, privateKey);
+            String signedString = Base64.encodeToString(signed, Base64.DEFAULT);
+
+            object.put("Signature", signedString);
         } catch (JSONException e) {
+            e.printStackTrace();
+        } catch (NoSuchAlgorithmException e) {
+            e.printStackTrace();
+        } catch (UnsupportedEncodingException e) {
             e.printStackTrace();
         }
         String base64String = null;
