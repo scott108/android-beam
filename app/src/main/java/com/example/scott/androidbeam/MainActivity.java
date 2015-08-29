@@ -70,13 +70,21 @@ public class MainActivity extends Activity implements CreateNdefMessageCallback,
     Intent originIntent;
 
     //Key generate
-    KeyPair keyPair = RSA.generateKeyPair();
+    /*KeyPair keyPair = RSA.generateKeyPair();
     final RSAPublicKey publicKey = (RSAPublicKey) keyPair.getPublic();
     final BigInteger publicExponent = publicKey.getPublicExponent();
     final BigInteger modulus = publicKey.getModulus();
     RSAPrivateKey privateKey = (RSAPrivateKey) keyPair.getPrivate();
-    BigInteger privateExponent = privateKey.getPrivateExponent();
+    BigInteger privateExponent = privateKey.getPrivateExponent();*/
 
+
+    final BigInteger modulus = new BigInteger("143854915996257127934881054745501985707406774855370276858724537089683610417734462144878408350385351936928074881758294135729179360855649990564573120807132735483900454934423182320371509048850680540170791226428301729715812898784678966973762034475582944989766417228246806000963630333109717268688718033060706449657");
+
+    final BigInteger publicExponent = new BigInteger("65537");
+    final BigInteger privateExponent = new BigInteger("27185301960932672070334343394159666951282983758544957488064809067484497536103900295471551755794781325645882591674572727940032140381726736547938387494031442245291417169190942465705529780352379141236168165150771928861302163385990246421318121822084918398051777257938447118498512912096832071229487004572270401153");
+
+    final RSAPrivateKey privateKey = RSA.getPrivateKey(modulus, privateExponent);
+    final RSAPublicKey publicKey = RSA.getPublicKey(modulus, publicExponent);
 
     public TextView getTextView() {
         return textView;
@@ -91,6 +99,10 @@ public class MainActivity extends Activity implements CreateNdefMessageCallback,
         Button sendJsonBtn = (Button) findViewById(R.id.sendJsonBtn);
         payEditText = (EditText) findViewById(R.id.payEditText);
         goodsHashMap = new HashMap<String, Goods>();
+
+        //System.out.println("publicExponent : " + publicExponent);
+        //System.out.println("modulus : " + modulus);
+        //System.out.println("privateExponent : " + privateExponent);
 
         checkBox1 = (CheckBox) findViewById(R.id.checkBox);
         checkBox2 = (CheckBox) findViewById(R.id.checkBox2);
@@ -293,13 +305,14 @@ public class MainActivity extends Activity implements CreateNdefMessageCallback,
             object.put("PayDetail", pay);
             object.put("PayBack", payBack);
 
-            //Sign the invoice
             String m = storeChoice + deadline + invoiceNum + currentTime + storeNum + storePhone + RSA.SHA1(goodsList) + totalGoods + totalGoodsPrice + pay + payBack;
+
             final byte[] signed = RSA.sign(m, privateKey);
             String signedString = Base64.encodeToString(signed, Base64.DEFAULT);
 
             object.put("Signature", signedString);
             object.put("GoodsHash", RSA.SHA1(goodsList));
+
         } catch (JSONException e) {
             e.printStackTrace();
         } catch (NoSuchAlgorithmException e) {
