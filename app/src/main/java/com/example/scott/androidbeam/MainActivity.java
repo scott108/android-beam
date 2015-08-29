@@ -252,13 +252,16 @@ public class MainActivity extends Activity implements CreateNdefMessageCallback,
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss");
         String currentTime = sdf.format(new Date());
         String invoiceNum = "AA-" + Math.round(Math.random()* 9999) + Math.round(Math.random()* 9999);
+        String deadline = "104年04-05月";
+        String storePhone = "000000-機01-序00000000";
+        String storeNum = Math.round(Math.random()* 9999)+"" + Math.round(Math.random()* 9999) + "";
         try {
             object.put("StoreName", storeChoice);
-            object.put("Dateline", "104年04-05月");
+            object.put("Deadline", deadline);
             object.put("InvoiceNum", invoiceNum);
             object.put("CurrentTime", currentTime);
-            object.put("StoreNum", "賣方" + Math.round(Math.random()* 9999) + Math.round(Math.random()* 9999));
-            object.put("StorePhone", "店號:000000-機01-序00000000");
+            object.put("StoreNum", storeNum);
+            object.put("StorePhone", storePhone);
             int totalGoodsPrice = 0;
             int totalGoods = 0;
             int k = 0;
@@ -283,18 +286,20 @@ public class MainActivity extends Activity implements CreateNdefMessageCallback,
                     }
                 }
             }
-
-            object.put("TotalMoney", totalGoods + "項    合計" + totalGoodsPrice);
+            object.put("GoodsQuantity", totalGoods);
+            object.put("TotalMoney", totalGoodsPrice);
             int pay = Integer.valueOf(payEditText.getText().toString());
-            int comeBack = pay - totalGoodsPrice;
-            object.put("PayDetail", "現金    $" + pay + "找零    $" + comeBack);
+            int payBack = pay - totalGoodsPrice;
+            object.put("PayDetail", pay);
+            object.put("PayBack", payBack);
 
             //Sign the invoice
-            String m = RSA.SHA1(goodsList) + invoiceNum + totalGoodsPrice + currentTime;
+            String m = storeChoice + deadline + invoiceNum + currentTime + storeNum + storePhone + RSA.SHA1(goodsList) + totalGoods + totalGoodsPrice + pay + payBack;
             final byte[] signed = RSA.sign(m, privateKey);
             String signedString = Base64.encodeToString(signed, Base64.DEFAULT);
 
             object.put("Signature", signedString);
+            object.put("GoodsHash", RSA.SHA1(goodsList));
         } catch (JSONException e) {
             e.printStackTrace();
         } catch (NoSuchAlgorithmException e) {
