@@ -1,7 +1,9 @@
 package com.example.scott.androidbeam;
 
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.app.PendingIntent;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.nfc.NdefMessage;
@@ -28,6 +30,7 @@ import android.nfc.NfcAdapter.CreateNdefMessageCallback;
 import android.nfc.NfcAdapter.OnNdefPushCompleteCallback;
 
 import com.example.scott.androidbeam.rsa.RSA;
+import com.google.gson.Gson;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -63,7 +66,6 @@ public class MainActivity extends Activity implements CreateNdefMessageCallback,
     private EditText editText1, editText2, editText3, editText4, editText5;
     private ArrayList<EditText> editTextsList;
     HashMap<String, Goods> goodsHashMap;
-    TextView textView;
     JSONObject object;
     String domain = "com.example.scott.androidbream";
     String type = "icheedata";
@@ -71,11 +73,15 @@ public class MainActivity extends Activity implements CreateNdefMessageCallback,
 
     //Key generate
     /*KeyPair keyPair = RSA.generateKeyPair();
-    final RSAPublicKey publicKey = (RSAPublicKey) keyPair.getPublic();
-    final BigInteger publicExponent = publicKey.getPublicExponent();
-    final BigInteger modulus = publicKey.getModulus();
-    RSAPrivateKey privateKey = (RSAPrivateKey) keyPair.getPrivate();
-    BigInteger privateExponent = privateKey.getPrivateExponent();*/
+    final RSAPublicKey publicKey1 = (RSAPublicKey) keyPair.getPublic();
+    final BigInteger publicExponent1 = publicKey1.getPublicExponent();
+    final BigInteger modulus1 = publicKey1.getModulus();
+    RSAPrivateKey privateKey1 = (RSAPrivateKey) keyPair.getPrivate();
+    BigInteger privateExponent1 = privateKey1.getPrivateExponent();*/
+
+    final BigInteger modulusCoupon = new BigInteger("107241757999324904109676237233998063372282760155581141342752413692887583048814821221030706707167921452158792708120548149058657917192427214697842032427487630966828799686728050147100820423608156536978307513903790660036654957441997168808342303029956119479061610128933276777366502321051631391540621213726816239821");
+    final BigInteger publicExponentCoupon = new BigInteger("65537");
+    RSAPublicKey publicKeyCoupon = RSA.getPublicKey(modulusCoupon, publicExponentCoupon);
 
 
     final BigInteger modulus = new BigInteger("143854915996257127934881054745501985707406774855370276858724537089683610417734462144878408350385351936928074881758294135729179360855649990564573120807132735483900454934423182320371509048850680540170791226428301729715812898784678966973762034475582944989766417228246806000963630333109717268688718033060706449657");
@@ -86,9 +92,7 @@ public class MainActivity extends Activity implements CreateNdefMessageCallback,
     final RSAPrivateKey privateKey = RSA.getPrivateKey(modulus, privateExponent);
     final RSAPublicKey publicKey = RSA.getPublicKey(modulus, publicExponent);
 
-    public TextView getTextView() {
-        return textView;
-    }
+    Gson gson;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -100,9 +104,9 @@ public class MainActivity extends Activity implements CreateNdefMessageCallback,
         payEditText = (EditText) findViewById(R.id.payEditText);
         goodsHashMap = new HashMap<String, Goods>();
 
-        //System.out.println("publicExponent : " + publicExponent);
-        //System.out.println("modulus : " + modulus);
-        //System.out.println("privateExponent : " + privateExponent);
+        //System.out.println("publicExponent : " + publicExponent1);
+        //System.out.println("modulus : " + modulus1);
+        //System.out.println("privateExponent : " + privateExponent1);
 
         checkBox1 = (CheckBox) findViewById(R.id.checkBox);
         checkBox2 = (CheckBox) findViewById(R.id.checkBox2);
@@ -126,6 +130,8 @@ public class MainActivity extends Activity implements CreateNdefMessageCallback,
         editTextsList.add(editText3);
         editTextsList.add(editText4);
         editTextsList.add(editText5);
+
+        gson = new Gson();
 
         for(int i = 0; i < 5; i++) {
             Goods goods = new Goods();
@@ -239,11 +245,6 @@ public class MainActivity extends Activity implements CreateNdefMessageCallback,
         String appSpecificPath = intent.getDataString();
         System.out.println("appSpecificPath :" + appSpecificPath);
         setIntent(intent);
-        /*
-        if (NfcAdapter.ACTION_NDEF_DISCOVERED.equals(getIntent().getAction()) && getIntent().getDataString().equals("vnd.android.nfc://ext/" + domain + ":" + type)) {
-            processIntent(getIntent());
-        }
-        */
     }
 
     @Override
@@ -369,8 +370,11 @@ public class MainActivity extends Activity implements CreateNdefMessageCallback,
         // only one message sent during the beam
         NdefMessage msg = (NdefMessage) rawMsgs[0];
 
+        System.out.println(new String(msg.getRecords()[0].getPayload()));
+
+        CouponItem couponItem = gson.fromJson(new String(msg.getRecords()[0].getPayload()), CouponItem.class);
+        verifyCoupon(couponItem);
         // record 0 contains the MIME type, record 1 is the AAR, if present
-        textView.setText(new String(msg.getRecords()[0].getPayload()));
         Toast.makeText(this, new String(msg.getRecords()[0].getPayload()), Toast.LENGTH_LONG).show();
 
     }
@@ -379,5 +383,32 @@ public class MainActivity extends Activity implements CreateNdefMessageCallback,
     public void onNdefPushComplete(NfcEvent event) {
         System.out.println("Finish Pushed");
         ndefMessage = null;
+    }
+
+    public void verifyCoupon(CouponItem couponItem) {
+
+        String couponContent = couponItem.getCouponID() + couponItem.getCouponName() + couponItem.getCouponContent() + couponItem.getStoreName() +
+                couponItem.getCouponBonus() + couponItem.getStartTime() + couponItem.getEndTime();
+
+        byte[] sign = Base64.decode(couponItem.getSignature(), Base64.DEFAULT);
+
+        boolean result = RSA.verify(couponContent, sign, publicKeyCoupon);
+        String resultMessage = "";
+        if (result) {
+            resultMessage = "簽章：" + couponItem.getSignature() + "\n核銷成功!!";
+        } else {
+            resultMessage = "簽章：" + couponItem.getSignature() + "\n核銷失敗!!";
+        }
+
+        new AlertDialog.Builder(MainActivity.this)
+                .setTitle("核銷結果")
+                .setMessage(resultMessage)
+                .setPositiveButton("確定", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+
+                    }
+                })
+                .show();
     }
 }
