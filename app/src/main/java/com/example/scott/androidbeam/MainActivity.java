@@ -13,6 +13,7 @@ import android.nfc.NfcEvent;
 import android.os.Bundle;
 import android.os.Parcelable;
 import android.util.Base64;
+import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -65,6 +66,7 @@ public class MainActivity extends Activity implements CreateNdefMessageCallback,
     private CheckBox checkBox1, checkBox2, checkBox3, checkBox4, checkBox5;
     private EditText editText1, editText2, editText3, editText4, editText5;
     private ArrayList<EditText> editTextsList;
+    private AlertDialog pinDialog;
     HashMap<String, Goods> goodsHashMap;
     JSONObject object;
     String domain = "com.example.scott.androidbream";
@@ -162,11 +164,34 @@ public class MainActivity extends Activity implements CreateNdefMessageCallback,
         lunchList = new ArrayAdapter<String>(this, android.R.layout.simple_spinner_item, lunch);
         spinner.setAdapter(lunchList);
 
+        final View item = LayoutInflater.from(MainActivity.this).inflate(R.layout.activity_pinbar, null);
+        pinDialog = new AlertDialog.Builder(MainActivity.this)
+                .setTitle("後台簽章伺服器連線")
+                .setView(item)
+                .setPositiveButton("確定", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        EditText editText = (EditText) item.findViewById(R.id.editText);
+                        if(editText.getText().toString().equals("123456")) {
+                            byte[] mimeData = createJSONObject();
+                            setNfcMessage(mimeData);
+                            Toast.makeText(getApplicationContext(), "簽章成功，請建立NFC連線傳送發票", Toast.LENGTH_SHORT).show();
+                        } else {
+                            Toast.makeText(getApplicationContext(), "連線失敗，請重新輸入PIN密碼", Toast.LENGTH_SHORT).show();
+                        }
+                        pinDialog.dismiss();
+                    }
+                }).setNegativeButton("取消", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialogInterface, int i) {
+                        pinDialog.dismiss();
+                    }
+                }).create();
+
         sendJsonBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                byte[] mimeData = createJSONObject();
-                setNfcMessage(mimeData);
+                pinDialog.show();
             }
         });
 

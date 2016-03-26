@@ -13,7 +13,7 @@
     <Button
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Send Invoice"
+        android:text="建立電子發票"
         android:id="@+id/sendJsonBtn"
         android:layout_alignParentBottom="true"
         android:layout_centerHorizontal="true" />
